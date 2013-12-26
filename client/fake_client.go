@@ -1,8 +1,9 @@
 package main
 
 import (
-	"bytes"
+	// "bytes"
 	"fmt"
+	"github.com/edwardtoday/skyeye/utils"
 	"net"
 	"os"
 )
@@ -13,22 +14,10 @@ const status = "\x02\xFF\x1B\xE7\x00\x00\x01\x00\x00\x00\x00\x00\x62\x72\x69\x67
 const get_event = "\x02\xFF\x1B\xE7\x00\x00\x1B\xE7\x00\x00\x00\x00\x00\x00\x04\x00\x06\x1B\xE8\xF4\x12\x03"
 const event = ""
 
-
 func checkError(err error) {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Fatal error: %s", err.Error())
 		os.Exit(1)
-	}
-}
-
-func print_packet(p []byte) {
-	for i := 0; i < len(p); i++ {
-		if p[i] != byte(0x03) {
-			fmt.Printf("%X ", p[i])
-		} else {
-			fmt.Printf("%X\n", p[i])
-			break
-		}
 	}
 }
 
@@ -39,30 +28,31 @@ func main() {
 	checkError(err)
 
 	// login
-	_, err = conn.Write([]byte(login))
+	sendBuf := make([]byte, 1024)
+	copy(sendBuf, utils.CreatePacketDTU("00", "34363030323038323234383534323000187141C3"))
+	fmt.Println("write: ", utils.HexPacketFromBuffer(sendBuf))
+	_, err = conn.Write(sendBuf)
 	checkError(err)
 
 	// check reply
-	reply := make([]byte, 64)
-	_, err = conn.Read(reply)
+	readBuf := make([]byte, 1024)
+	_, err = conn.Read(readBuf)
 	checkError(err)
-	fmt.Printf("server replied:")
-	print_packet(reply)
+	fmt.Println("read: ", utils.HexPacketFromBuffer(readBuf))
 
-	for {
-		buf := make([]byte, 1024)
-		_, err := conn.Read(buf)
-		checkError(err)
-		fmt.Printf("read from server:")
-		print_packet(buf)
-		if bytes.HasPrefix(buf, []byte(get_status)) {
-			// send status
-			_, err := conn.Write([]byte(status))
-			checkError(err)
-		} else if bytes.HasPrefix(buf, []byte(get_event)) {
-			// send events
-			_, err := conn.Write([]byte(event))
-			checkError(err)
-		}
-	}
+	// for {
+	// 	_, err := conn.Read(readBuf)
+	// 	checkError(err)
+	// 	fmt.Printf("read from server:")
+	// 	print_packet(readBuf)
+	// 	if bytes.HasPrefix(readBuf, []byte(get_status)) {
+	// 		// send status
+	// 		_, err := conn.Write([]byte(status))
+	// 		checkError(err)
+	// 	} else if bytes.HasPrefix(readBuf, []byte(get_event)) {
+	// 		// send events
+	// 		_, err := conn.Write([]byte(event))
+	// 		checkError(err)
+	// 	}
+	// }
 }
