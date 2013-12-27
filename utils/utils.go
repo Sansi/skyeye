@@ -1,11 +1,12 @@
 package utils
 
 import (
-	"encoding/hex"
-	"strconv"
-	// "strings"
 	"bytes"
+	"encoding/binary"
+	"encoding/hex"
 	"fmt"
+	"os"
+	"strconv"
 )
 
 const PACKET_STX = "02"
@@ -16,12 +17,19 @@ const PACKET_STX_B byte = 0x02
 const PACKET_ETX_B byte = 0x03
 const PACKET_ESC_B byte = 0x1b
 
+func CheckError(err error) {
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Fatal error: %s", err.Error())
+		os.Exit(1)
+	}
+}
+
 func CreatePacketDTU(frameType string, frameData string) []byte {
 	// combine frameType and frameData for crc16
 	s := frameType + frameData
 	// calc crc16 checksum
 	buffer4crc, _ := hex.DecodeString(s)
-	crc := Crc16(buffer4crc,len(buffer4crc))
+	crc := Crc16(buffer4crc, len(buffer4crc))
 	s += strconv.FormatUint(uint64(crc), 16)
 	// escape
 	s = escape(s)
@@ -69,7 +77,7 @@ var crc_table = [256]uint16{
 func Crc16(buffer []byte, length int) uint16 {
 	var crc uint16 = 0
 	for i := 0; i < length; i++ {
-		crc = crc_table[(byte(crc >> 8) ^ buffer[i]) & 0xFF] ^ uint16(crc << 8);
+		crc = crc_table[(byte(crc>>8)^buffer[i])&0xFF] ^ uint16(crc<<8)
 	}
 	return crc
 }
@@ -92,6 +100,19 @@ func escape(src string) string {
 	return hex.EncodeToString(newSlice)
 }
 
+func Unescape(slice []byte) []byte {
+	newSlice := []byte{}
+	for i := 0; i < len(slice); i++ {
+		if slice[i] != PACKET_ESC_B {
+			newSlice = append(newSlice, slice[i])
+		} else {
+			newSlice = append(newSlice, (slice[i] + slice[i+1]))
+			i++
+		}
+	}
+	return newSlice
+}
+
 func PacketLen(buf []byte) int {
 	postfix_pos := bytes.IndexByte(buf, PACKET_ETX_B)
 	return postfix_pos + 1
@@ -100,6 +121,10 @@ func PacketLen(buf []byte) int {
 func HexPacketFromBuffer(buf []byte) string {
 	s := hex.EncodeToString(buf)
 	return s
+}
+
+func PrintPacket(packet []byte) {
+	fmt.Printf("packet:\t%x\n", packet)
 }
 
 func PrintBuf(buf []byte) {
@@ -114,4 +139,8 @@ func PrintRecvBuf(buf []byte) {
 func PrintSendBuf(buf []byte) {
 	fmt.Printf("send:\t")
 	PrintBuf(buf)
+}
+
+func BytesToUint16(array []byte) uint16 {
+	return binary.BigEndian.Uint16(array[0:2])
 }
