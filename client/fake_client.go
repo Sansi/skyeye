@@ -33,11 +33,15 @@ func (c *SkyeyeClient) Close() {
 	c.conn.Close()
 }
 
-func (c *SkyeyeClient) DTULogin(data string) {
-	copy(c.sendBuf, utils.CreatePacketDTU("00", data))
+func (c *SkyeyeClient) Send() {
 	_, c.err = c.conn.Write(c.sendBuf[:utils.PacketLen(c.sendBuf)])
 	utils.CheckError(c.err)
 	utils.PrintSendBuf(c.sendBuf)
+}
+
+func (c *SkyeyeClient) DTULogin(data string) {
+	copy(c.sendBuf, utils.CreatePacketDTU("00", data))
+	c.Send()
 }
 
 func (c *SkyeyeClient) Loop() {
@@ -95,8 +99,8 @@ func (c *SkyeyeClient) ProcDevicePacket(src []byte) {
 		switch obj {
 		case 1:
 			fmt.Printf("status\n")
-			_, c.err = c.conn.Write([]byte(status))
-			utils.CheckError(c.err)
+			copy(c.sendBuf, []byte(status))
+			c.Send()
 		case 2:
 			fmt.Printf("event\n")
 			c.quit = true // game over
