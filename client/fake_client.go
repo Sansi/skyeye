@@ -62,6 +62,8 @@ func (c *SkyeyeClient) Loop() {
 			}
 		case byte(0x01):
 			fmt.Println("Server sends keepalive. Replying...")
+			copy(c.sendBuf, utils.CreatePacketDTU("01", ""))
+			c.Send()
 		case byte(0x02):
 			fmt.Println("Server queries DTU info.")
 		case byte(0xff):
