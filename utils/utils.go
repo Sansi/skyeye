@@ -29,7 +29,7 @@ func CreatePacketDTU(frameType string, frameData string) []byte {
 	s := frameType + frameData
 	// calc crc16 checksum
 	buffer4crc, _ := hex.DecodeString(s)
-	crc := Crc16(buffer4crc, len(buffer4crc))
+	crc := Crc16(buffer4crc)
 	s += strconv.FormatUint(uint64(crc), 16)
 	// escape
 	s = escape(s)
@@ -37,6 +37,20 @@ func CreatePacketDTU(frameType string, frameData string) []byte {
 	s = PACKET_STX + s + PACKET_ETX
 	packet, _ := hex.DecodeString(s)
 	return packet
+}
+
+/// return a string that can be used as frameData in CreatePacketDTU
+func CreatePacketDevice(frameType string, frameFunc string, frameData string) string {
+	s := frameType + frameFunc
+	var buf bytes.Buffer
+	buf.WriteString(frameData)
+	s += hex.EncodeToString(buf.Bytes())
+	buffer4checksum, _ := hex.DecodeString(s)
+	checksum := Checksum(buffer4checksum)
+	s += hex.EncodeToString([]byte{checksum})
+	s = escape(s)
+	s = PACKET_STX + s + PACKET_ETX
+	return s
 }
 
 var crc_table = [256]uint16{
@@ -74,12 +88,22 @@ var crc_table = [256]uint16{
 	0x6E17, 0x7E36, 0x4E55, 0x5E74, 0x2E93, 0x3EB2, 0x0ED1, 0x1EF0,
 }
 
-func Crc16(buffer []byte, length int) uint16 {
+func Crc16(buffer []byte) uint16 {
+	length := len(buffer)
 	var crc uint16 = 0
 	for i := 0; i < length; i++ {
 		crc = crc_table[(byte(crc>>8)^buffer[i])&0xFF] ^ uint16(crc<<8)
 	}
 	return crc
+}
+
+func Checksum(buffer []byte) byte {
+	length := len(buffer)
+	var checksum byte = 0
+	for i := 0; i < length; i++ {
+		checksum += buffer[i]
+	}
+	return checksum
 }
 
 func escape(src string) string {
