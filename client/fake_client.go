@@ -1,10 +1,10 @@
-package main
+package client
 
 import (
-	// "bytes"
 	"fmt"
 	"github.com/edwardtoday/skyeye/utils"
 	"net"
+	// "time"
 )
 
 const strStatus = "brightness_control,brightness_control,automatic,0\nmanual_brightness,manual_brightness,7,0\ncur_photocell,cur_photocell,398,0\nlast_reset_time,last_reset_time,\"2013-12-25 16:50:12\",0\nbox_error,box0,1,1\n"
@@ -20,7 +20,7 @@ type SkyeyeClient struct {
 }
 
 func (c *SkyeyeClient) Init() {
-	// c.servAddr = "202.11.11.162:9801"
+	// c.servAddr = "202.11.11.162:9800"
 	c.servAddr = "202.11.20.186:9912"
 	c.sendBuf = make([]byte, 2048)
 	c.recvBuf = make([]byte, 2048)
@@ -60,6 +60,7 @@ func (c *SkyeyeClient) Loop() {
 			fmt.Printf("DTU login ")
 			if packet[2] == byte(0x00) {
 				fmt.Printf("successful\n")
+				c.quit = true // test login
 			} else {
 				fmt.Printf("failed\n")
 			}
@@ -81,12 +82,13 @@ func (c *SkyeyeClient) Loop() {
 
 var clientNum int
 
-func createClient(cid chan int) {
+func CreateClient(cid chan int, id string) {
 	c := SkyeyeClient{}
 	c.Init()
 	c.Connect()
 	defer c.Close()
-	c.DTULogin("34363030323038323234383534323000187141C3")
+	dtuInfo := utils.CreateDTUInfo(id)
+	c.DTULogin(dtuInfo)
 	c.Loop()
 
 	clientNum++
@@ -124,16 +126,4 @@ func (c *SkyeyeClient) ProcDevicePacket(src []byte) {
 	default:
 		fmt.Printf("Invalid device packet type from server: %x\n", t)
 	}
-}
-
-func main() {
-	cid := make(chan int)
-	numBenchmark := 1
-	for i := 0; i < numBenchmark; i++ {
-		go createClient(cid)
-	}
-	for i := 0; i < numBenchmark; i++ {
-		<-cid
-	}
-
 }

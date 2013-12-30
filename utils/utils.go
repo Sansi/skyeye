@@ -30,7 +30,11 @@ func CreatePacketDTU(frameType string, frameData string) []byte {
 	// calc crc16 checksum
 	buffer4crc, _ := hex.DecodeString(s)
 	crc := Crc16(buffer4crc)
-	s += strconv.FormatUint(uint64(crc), 16)
+	crc_str := strconv.FormatUint(uint64(crc), 16)
+	for i := len(crc_str); i < 4; i++ {
+		crc_str = "0"+crc_str
+	}
+	s += crc_str
 	// escape
 	s = escape(s)
 	// add prefix and postfix
@@ -167,4 +171,10 @@ func PrintSendBuf(buf []byte) {
 
 func BytesToUint16(array []byte) uint16 {
 	return binary.BigEndian.Uint16(array[0:2])
+}
+
+func CreateDTUInfo(id string) string {
+	var buf bytes.Buffer
+	buf.WriteString(id)
+	return (hex.EncodeToString(buf.Bytes()) + "00187141C3")
 }
