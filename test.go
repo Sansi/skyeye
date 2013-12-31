@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	"fmt"
+	// "fmt"
 	"github.com/edwardtoday/skyeye/client"
 	// "github.com/edwardtoday/skyeye/utils"
 	"math/rand"
@@ -29,9 +29,10 @@ func randInt(min int, max int) int {
 
 func main() {
 	cid := make(chan int)
-	numBenchmark := 500
+	numBenchmark := 200
+	numRun := 10
 
-	testIds := make([]string, numBenchmark)
+	testIds := make([]string, numBenchmark*numRun)
 	for i := 0; i < len(testIds); i++ {
 		testIds[i] = "test" + randomString(11)
 	}
@@ -39,12 +40,15 @@ func main() {
 	client.NewDevices(testIds)
 	defer client.DelDevices(testIds)
 
-	for i := 0; i < numBenchmark; i++ {
-		fmt.Println("CreateClient: ", testIds[i])
-		go client.CreateClient(cid, testIds[i])
-		time.Sleep(300 * time.Millisecond)
+	for j := 0; j < numRun; j++ {
+		for i := 0; i < numBenchmark; i++ {
+			go client.CreateClient(cid, testIds[i+j*numBenchmark])
+			time.Sleep(10 * time.Millisecond)
+		}
+		time.Sleep(1000 * time.Millisecond)
 	}
-	for i := 0; i < numBenchmark; i++ {
+
+	for i := 0; i < numBenchmark*numRun; i++ {
 		<-cid
 	}
 

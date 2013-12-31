@@ -83,6 +83,7 @@ func (c *SkyeyeClient) Loop() {
 var clientNum int
 
 func CreateClient(cid chan int, id string) {
+	fmt.Println("CreateClient: ", id)
 	c := SkyeyeClient{}
 	c.Init()
 	c.Connect()
