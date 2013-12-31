@@ -20,7 +20,7 @@ const PACKET_ESC_B byte = 0x1b
 func CheckError(err error) {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Fatal error: %s", err.Error())
-		os.Exit(1)
+		//os.Exit(1)
 	}
 }
 
