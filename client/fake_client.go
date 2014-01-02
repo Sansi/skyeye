@@ -21,7 +21,7 @@ type SkyeyeClient struct {
 
 func (c *SkyeyeClient) Init() {
 	// c.servAddr = "202.11.11.162:9800"
-	c.servAddr = "202.11.20.186:9912"
+	c.servAddr = "202.11.12.186:9912"
 	c.sendBuf = make([]byte, 2048)
 	c.recvBuf = make([]byte, 2048)
 	c.quit = false
