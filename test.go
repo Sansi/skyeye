@@ -29,8 +29,8 @@ func randInt(min int, max int) int {
 
 func main() {
 	cid := make(chan int)
-	numBenchmark := 200
-	numRun := 10
+	numBenchmark := 1000
+	numRun := 1
 
 	testIds := make([]string, numBenchmark*numRun)
 	for i := 0; i < len(testIds); i++ {
@@ -43,7 +43,7 @@ func main() {
 	for j := 0; j < numRun; j++ {
 		for i := 0; i < numBenchmark; i++ {
 			go client.CreateClient(cid, testIds[i+j*numBenchmark])
-			time.Sleep(10 * time.Millisecond)
+			time.Sleep(1 * time.Millisecond)
 		}
 		time.Sleep(1000 * time.Millisecond)
 	}
